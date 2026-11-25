@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10111c">
+  <title>Task Scheduling · SMA & Aquila Optimizer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+  <header class="topbar"><a href="#1" class="brand" aria-label="Halaman awal">SCHED.<span>STUDI METAHEURISTIK</span></a><span id="chapter">PENDAHULUAN</span><div class="tools"><button id="overview-button" title="Daftar slide (O)">Daftar slide</button><button id="notes-button" title="Catatan pembicara (N)">Catatan</button><button id="fullscreen-button" title="Layar penuh (F)" aria-label="Layar penuh">⛶</button><button id="help-button" aria-label="Bantuan pintasan">?</button></div></header>
+  <main id="slides" aria-label="Presentasi Task Scheduling">
+
+  <section class="slide cover active" data-chapter="Pendahuluan" data-title="Task Scheduling dengan Metaheuristik">
+    <div class="eyebrow">OPTIMASI PENJADWALAN TUGAS</div>
+    <div class="cover-layout"><div><h1>Task<br>Scheduling<span class="accent">dengan Metaheuristik</span></h1><p class="lead">Dua cara alam menginspirasi<br>pencarian jadwal yang lebih baik.</p><div class="algorithm-labels"><span class="sma-text">SMA <small>Slime Mould Algorithm</small></span><span class="ao-text">AO <small>Aquila Optimizer</small></span></div></div><div class="hero-evidence"><div class="figure-label">SATU WORKLOAD, BERBAGAI KEMUNGKINAN JADWAL</div><div id="hero-gantt"></div><div class="hero-number"><strong id="hero-makespan">—</strong><span>detik makespan<br><small>Contoh sintetis · 12 tugas / 3 VM</small></span></div><a class="text-button" href="./visualization/?view=compare&amp;returnSlide=1" data-visualization="compare">Buka Visualisasi 3D <span>↗</span></a></div></div>
+    <div class="cover-bottom">Presentasi interaktif <span>Konsep, persamaan, dan simulasi langsung</span></div>
+  </section>
+
+  <section class="slide" data-chapter="Pendahuluan" data-title="Tim penyusun">
+    <div class="eyebrow">KELOMPOK PENYUSUN</div><h2>Lima anggota.<br><span class="muted">Satu ruang eksplorasi.</span></h2>
+    <div class="team-list"><div><span>01</span><strong>Ardhi Putra Pradana</strong><code>5027241022</code></div><div><span>02</span><strong>Aditya Reza Daffansyah</strong><code>5027241034</code></div><div><span>03</span><strong>Ica Zika Hamizah</strong><code>5027241058</code></div><div><span>04</span><strong>Oryza Qiara Ramadhani</strong><code>5027241084</code></div><div><span>05</span><strong>Erlinda Annisa Azzahra</strong><code>5027241108</code></div></div>
+  </section>
+
+  <section class="slide" data-chapter="Pendahuluan" data-title="Peta pembahasan">
+    <div class="eyebrow">PETA PEMBAHASAN</div><h2>Memahami masalah.<br><span class="muted">Lalu menguji pencariannya.</span></h2>
+    <div class="agenda"><button data-go="4"><span>01</span><div><h3>Masalah & model</h3><p>Tugas, VM, fungsi objektif, dan representasi solusi</p></div><b>04–10 ↗</b></button><button data-go="11"><span class="sma-text">02</span><div><h3>Slime Mould Algorithm</h3><p>Bobot adaptif dan perubahan posisi populasi</p></div><b>11–15 ↗</b></button><button data-go="16"><span class="ao-text">03</span><div><h3>Aquila Optimizer</h3><p>Empat strategi pencarian dari perilaku berburu</p></div><b>16–20 ↗</b></button><button data-go="21"><span>04</span><div><h3>Laboratorium & evaluasi</h3><p>Perbandingan, pengulangan, validasi, dan diskusi</p></div><b>21–28 ↗</b></button></div>
+    <p class="footnote">Klik bagian untuk melompat. Gunakan tombol panah atau spasi untuk berpindah slide.</p>
+  </section>
+
+  <section class="slide" data-chapter="Masalah & model" data-title="Masalah penjadwalan tugas">
+    <div class="eyebrow">01 / MASALAH</div><h2>Tugas yang sama.<br><span class="accent">Waktu selesai yang berbeda.</span></h2>
+    <div class="split"><div><p class="lead">Scheduler menentukan VM tempat setiap tugas berjalan.</p><p>Pembagian yang menumpuk pada satu VM membuat VM lain menganggur. <em>Makespan</em> mengukur kapan seluruh tugas selesai.</p><div class="segmented" id="intro-presets"><button data-preset="one" class="selected">Satu VM</button><button data-preset="rr">Round Robin</button><button data-preset="eft">EFT</button></div><p class="caption">Klik strategi dan amati perubahan beban.</p></div><div><div id="intro-gantt"></div><div id="intro-metrics" class="metrics"></div></div></div>
+    <p class="footnote">EFT = Earliest Finish Time, memilih VM dengan prediksi waktu selesai paling awal untuk tugas berikutnya.</p>
+  </section>
+
+  <section class="slide" data-chapter="Masalah & model" data-title="Asumsi model simulasi">
+    <div class="eyebrow">01 / MODEL SIMULASI</div><h2>Batas model yang kita gunakan</h2><p class="subtitle">Contoh mandiri untuk memusatkan perhatian pada keputusan alokasi.</p>
+    <div class="split"><div class="numbered"><div><b>01</b><p>Tugas independen, seluruhnya tiba pada <strong>t = 0</strong>. Tidak ada dependency atau deadline.</p></div><div><b>02</b><p>Setiap VM menjalankan <strong>satu tugas pada satu waktu</strong>, tanpa preemption.</p></div><div><b>03</b><p>Urutan tugas di setiap VM mengikuti ID. Yang dioptimasi adalah <strong>penempatan tugas</strong>.</p></div><div><b>04</b><p>RAM, jaringan, waktu transfer, dan overhead scheduler diabaikan.</p></div></div><div><h3>VM heterogen</h3><table><thead><tr><th>VM</th><th>Kecepatan</th><th>Tarif aktif</th></tr></thead><tbody><tr><td>VM 1</td><td>1.000 MIPS</td><td>0,010 UB/detik</td></tr><tr><td>VM 2</td><td>1.600 MIPS</td><td>0,022 UB/detik</td></tr><tr><td>VM 3</td><td>2.400 MIPS</td><td>0,048 UB/detik</td></tr><tr class="muted"><td>VM 4*</td><td>3.200 MIPS</td><td>0,080 UB/detik</td></tr></tbody></table><p class="caption">UB = unit biaya sintetis. *Opsional di laboratorium.<br>MI = million instructions. MIPS = MI per detik.</p><p class="callout">VM lebih cepat memiliki biaya per MI yang lebih tinggi pada contoh ini.</p></div></div>
+  </section>
+
+  <section class="slide" data-chapter="Masalah & model" data-title="Contoh perhitungan jadwal">
+    <div class="eyebrow">01 / CONTOH NUMERIK</div><h2>Menghitung satu jadwal</h2><p class="subtitle">Enam tugas dengan penempatan Round Robin ke tiga VM.</p>
+    <div class="split"><div><table><thead><tr><th>Tugas</th><th>Panjang (MI)</th><th>VM</th><th>Durasi (d)</th></tr></thead><tbody id="worked-table"></tbody></table></div><div><div class="formula">d<sub>ij</sub> = L<sub>i</sub> / s<sub>j</sub></div><p class="caption">8.000 MI / 2.400 MIPS = 3,33 detik</p><div id="worked-gantt"></div><div id="worked-metrics" class="metrics"></div></div></div>
+    <p class="footnote">Mulai tugas = waktu VM tersedia. Selesai = mulai + durasi. Biaya total = Σ durasi tugas × tarif VM.</p>
+  </section>
+
+  <section class="slide" data-chapter="Masalah & model" data-title="Ukuran ruang pencarian">
+    <div class="eyebrow">01 / RUANG PENCARIAN</div><h2>Mengapa perlu strategi pencarian?</h2>
+    <div class="split"><div><div class="big-equation">m<sup>n</sup></div><p class="lead">n tugas, m pilihan VM per tugas.</p><p>Jumlah ini hanya menghitung penempatan. Jika urutan dan dependency ikut menjadi variabel, model bisa lebih kompleks.</p><p class="callout">Metaheuristik mencari solusi baik dalam anggaran komputasi terbatas. Optimum global tidak dijamin.</p></div><div class="search-counter"><label for="space-n">Jumlah tugas <output id="space-n-out">12</output></label><input id="space-n" type="range" min="6" max="60" value="12"><strong id="search-size"></strong><p>kemungkinan penempatan pada 3 VM</p><div class="rule"></div><p>Untuk 6 tugas: <b>729</b> kombinasi.<br>Untuk 30 tugas: sekitar <b>2,06 × 10¹⁴</b> kombinasi.</p></div></div>
+  </section>
+
+  <section class="slide" data-chapter="Masalah & model" data-title="Cara kerja metaheuristik">
+    <div class="eyebrow">01 / KERANGKA PENCARIAN</div><h2>Populasi, evaluasi, perbaikan</h2><p class="subtitle">Satu individu merepresentasikan satu kandidat jadwal lengkap.</p>
+    <div class="process" id="meta-process"><button data-step="0" class="selected"><b>01</b><h3>Inisialisasi</h3><p>Buat N kandidat acak</p></button><button data-step="1"><b>02</b><h3>Evaluasi</h3><p>Hitung fitness setiap jadwal</p></button><button data-step="2"><b>03</b><h3>Pembaruan</h3><p>SMA atau AO membuat posisi baru</p></button><button data-step="3"><b>04</b><h3>Terminasi</h3><p>Simpan yang terbaik hingga batas T</p></button></div><p id="process-explanation" class="process-explanation"></p>
+    <div class="two-concepts"><div><h3>Eksplorasi</h3><p>Mencoba daerah solusi yang berbeda untuk menjaga keberagaman pencarian.</p></div><div><h3>Eksploitasi</h3><p>Memperbaiki kandidat di sekitar informasi terbaik yang sudah ditemukan.</p></div></div>
+  </section>
+
+  <section class="slide" data-chapter="Masalah & model" data-title="Representasi solusi dan decoder">
+    <div class="eyebrow">01 / ADAPTASI KE DOMAIN DISKRET</div><h2>Vektor kontinu menjadi jadwal</h2><p class="subtitle">SMA dan AO memperbarui bilangan real. Decoder mengubahnya menjadi indeks VM.</p>
+    <div class="formula inline-formula">VM(x<sub>i</sub>) = min(m − 1, ⌊m · clip(x<sub>i</sub>, 0, 1)⌋) <small>indeks internal 0…m−1</small></div>
+    <div class="split encoding-layout"><div><div class="bin-key"><span>VM 1: [0; ⅓)</span><span>VM 2: [⅓; ⅔)</span><span>VM 3: [⅔; 1]</span></div><div id="encoding-sliders"></div></div><div><div id="encoding-gantt"></div><div id="encoding-metrics" class="metrics"></div><p class="caption">Geser posisi tugas. Jadwal berubah saat posisi melewati batas interval VM.</p></div></div>
+    <p class="footnote">Ini pilihan adaptasi untuk demo, bukan aturan scheduling bawaan paper. Banyak posisi kontinu menghasilkan jadwal yang sama.</p>
+  </section>
+
+  <section class="slide" data-chapter="Masalah & model" data-title="Fungsi objektif waktu dan biaya">
+    <div class="eyebrow">01 / FUNGSI OBJEKTIF</div><h2>Kompromi waktu dan biaya</h2>
+    <div class="formula objective-formula">min f(X) = w · <span class="fraction"><span>M(X)</span><span>M<sub>RR</sub></span></span> + (1 − w) · <span class="fraction"><span>C(X)</span><span>C<sub>RR</sub></span></span></div>
+    <div class="split"><div><p><b>M</b> = makespan, dalam detik.<br><b>C</b> = total biaya eksekusi, dalam UB.</p><p>Pembagi memakai jadwal Round Robin pada workload yang sama, sehingga dua komponen tidak langsung bercampur satuan.</p><label for="objective-weight">Bobot waktu <output id="objective-weight-out">60%</output></label><input id="objective-weight" type="range" min="0" max="100" value="60"><p class="caption">0% memprioritaskan biaya. 100% memprioritaskan makespan.</p></div><div><table><thead><tr><th>Kandidat</th><th>M (d)</th><th>C (UB)</th><th>f ↓</th></tr></thead><tbody id="objective-table"></tbody></table><p id="objective-message" class="callout"></p></div></div>
+    <p class="footnote">f Round Robin = 1. Kandidat dengan f &lt; 1 lebih baik menurut bobot tersebut. Nilai normalisasi bisa melebihi 1.</p>
+  </section>
+
+  <section class="slide nature-slide" data-chapter="Slime Mould Algorithm" data-title="Inspirasi Slime Mould Algorithm">
+    <div class="nature-text"><div class="eyebrow sma-text">02 / SLIME MOULD ALGORITHM</div><h2>Pencarian melalui<br><span class="sma-text">umpan balik adaptif.</span></h2><p class="lead">Li dkk. memperkenalkan SMA pada 2020, terinspirasi perilaku mencari makan <i>Physarum polycephalum</i>.</p><p>Kualitas sumber makanan memengaruhi jaringan aliran dan kontraksi. SMA menerjemahkannya menjadi bobot fitness serta osilasi perubahan posisi.</p><div class="nature-definition"><span>Organisme</span><b>Sumber makanan</b><span>Model optimasi</span><b>Solusi dengan fitness baik</b></div><a class="source-link" href="https://doi.org/10.1016/j.future.2020.03.055" target="_blank" rel="noopener">[1] Li dkk., 2020 ↗</a></div><figure><img src="assets/physarum.jpg" alt="Plasmodium Physarum polycephalum berwarna kuning di permukaan kulit kayu"><figcaption>Foto: frankenstoen / Wikimedia Commons · CC BY 2.5 · tampilan dipotong</figcaption></figure>
+  </section>
+
+  <section class="slide" data-chapter="Slime Mould Algorithm" data-title="Aturan pembaruan SMA">
+    <div class="eyebrow sma-text">02 / MEKANISME SMA</div><h2>Tiga kemungkinan posisi baru</h2><p class="subtitle">Percabangan pertama berlaku per individu. Dua cabang berikutnya dipilih per dimensi.</p>
+    <div class="formula-rows"><div><b>01</b><div><h3>Eksplorasi acak <small>u &lt; z, z = 0,03</small></h3><code>X′ = LB + u · (UB − LB)</code></div><p>Membuka kembali kesempatan menjelajah.</p></div><div><b>02</b><div><h3>Mendekati sumber terbaik <small>jika bukan acak dan r &lt; pᵢ</small></h3><code>X′ = X<sub>b</sub> + v<sub>b</sub> · (Wᵢ · X<sub>A</sub> − X<sub>B</sub>)</code></div><p>Menggabungkan kandidat terbaik dan dua individu acak.</p></div><div><b>03</b><div><h3>Kontraksi <small>jika bukan acak dan r ≥ pᵢ</small></h3><code>X′ = v<sub>c</sub> · Xᵢ</code></div><p>Memodulasi posisi dengan amplitudo yang mengecil.</p></div></div>
+    <p class="footnote">X<sub>b</sub> = posisi terbaik yang ditemukan. A dan B = indeks individu acak. Operasi berlaku per elemen. [1, 2]</p>
+  </section>
+
+  <section class="slide" data-chapter="Slime Mould Algorithm" data-title="Bobot dan parameter SMA">
+    <div class="eyebrow sma-text">02 / PARAMETER SMA</div><h2>Fitness mengatur gerak pencarian</h2>
+    <div class="split"><div><div class="formula small-formula">pᵢ = tanh |fᵢ − f<sub>best</sub>|</div><p>Selisih fitness mengatur peluang cabang mendekat. Skala fungsi objektif ikut memengaruhi pᵢ.</p><div class="formula small-formula">Wᵢ = 1 ± r · log₁₀(1 + <span class="fraction"><span>bF − fᵢ</span><span>bF − wF</span></span>)</div><p>Gunakan <b>+</b> untuk separuh peringkat terbaik dan <b>−</b> untuk sisanya. bF/wF adalah fitness terbaik/terburuk populasi saat ini.</p></div><div><div class="formula small-formula">a = arctanh(1 − t/T)<br>b = 1 − t/T<br>v<sub>b</sub> ∼ U(−a, a) &nbsp; v<sub>c</sub> ∼ U(−b, b)</div><p>Amplitudo gerak menurun saat iterasi bertambah. Setelah pembaruan, batasi posisi ke [0, 1], lalu decode dan evaluasi.</p><div class="callout">Demo menyimpan arsip solusi terbaik. Populasi saat ini tetap dapat memburuk meskipun kurva terbaik tidak naik.</div></div></div>
+    <p class="footnote">t = 1…T. Jika bF = wF, demo memakai rasio 0 agar tidak membagi nol. Rumus ringkas mengikuti SMA [1, 2].</p>
+  </section>
+
+  <section class="slide lab-slide" data-chapter="Slime Mould Algorithm" data-title="Simulasi SMA per iterasi">
+    <a class="visualization-link" href="./visualization/?view=sma&amp;returnSlide=14" data-visualization="sma">Buka Visualisasi 3D ↗</a>
+    <div class="eyebrow sma-text">02 / LABORATORIUM SMA</div><h2>Amati SMA bekerja</h2><p class="subtitle">Jalankan satu iterasi atau putar pencarian. Semua angka berasal dari perhitungan browser.</p><div class="lab" data-algorithm="SMA"></div>
+  </section>
+
+  <section class="slide" data-chapter="Slime Mould Algorithm" data-title="Membaca perilaku SMA">
+    <div class="eyebrow sma-text">02 / INTERPRETASI</div><h2>Apa yang perlu diperhatikan?</h2>
+    <div class="editorial-columns"><div><span class="large-index sma-text">01</span><h3>Kurva terbaik</h3><p>Bagian datar berarti belum ada perbaikan arsip. Itu tidak membuktikan bahwa optimum sudah tercapai.</p></div><div><span class="large-index sma-text">02</span><h3>Keberagaman</h3><p>Jumlah jadwal unik bisa turun meskipun posisi real masih berbeda. Decoder menciptakan daerah fitness yang datar.</p></div><div><span class="large-index sma-text">03</span><h3>Batas posisi</h3><p>Kontraksi dan clip dapat menumpuk posisi di nol, yaitu VM 1. Encoding memengaruhi perilaku algoritma.</p></div></div><div class="wide-takeaway">Bobot adaptif memberi mekanisme pencarian. Kualitas jadwal tetap bergantung pada model, decoder, dan parameter.</div>
+  </section>
+
+  <section class="slide nature-slide" data-chapter="Aquila Optimizer" data-title="Inspirasi Aquila Optimizer">
+    <div class="nature-text"><div class="eyebrow ao-text">03 / AQUILA OPTIMIZER</div><h2>Empat strategi.<br><span class="ao-text">Satu proses berburu.</span></h2><p class="lead">Abualigah dkk. memperkenalkan AO pada 2021, terinspirasi strategi berburu elang Aquila.</p><p>Algoritma mengalokasikan bagian awal pencarian untuk eksplorasi dan bagian akhir untuk eksploitasi.</p><div class="nature-definition"><span>Awal pencarian</span><b>Mencari daerah menjanjikan</b><span>Akhir pencarian</span><b>Memperbaiki kandidat</b></div><a class="source-link" href="https://doi.org/10.1016/j.cie.2021.107250" target="_blank" rel="noopener">[3] Abualigah dkk., 2021 ↗</a></div><figure><img src="assets/aquila.jpg" alt="Elang Aquila chrysaetos terbang dengan sayap terbentang"><figcaption>Foto: Tony Hisgett / Wikimedia Commons · CC BY 2.0 · tampilan dipotong</figcaption></figure>
+  </section>
+
+  <section class="slide" data-chapter="Aquila Optimizer" data-title="Empat strategi Aquila Optimizer">
+    <div class="eyebrow ao-text">03 / MEKANISME AO</div><h2>Empat aturan pembaruan posisi</h2><p class="subtitle">Klik strategi untuk melihat persamaan dan maknanya.</p>
+    <div class="ao-layout"><div id="ao-strategies"><button data-strategy="0" class="selected"><b>X₁</b><span>Eksplorasi diperluas<small>Terbang tinggi, memilih daerah</small></span></button><button data-strategy="1"><b>X₂</b><span>Eksplorasi dipersempit<small>Terbang memutar dan meluncur</small></span></button><button data-strategy="2"><b>X₃</b><span>Eksploitasi diperluas<small>Terbang rendah dan turun perlahan</small></span></button><button data-strategy="3"><b>X₄</b><span>Eksploitasi dipersempit<small>Berjalan dan menangkap mangsa</small></span></button></div><div id="ao-strategy-detail"></div></div>
+    <p class="footnote">X̄ = rata-rata posisi seluruh populasi per dimensi. X<sub>R</sub> = individu acak. L = langkah Lévy. [3, 4]</p>
+  </section>
+
+  <section class="slide" data-chapter="Aquila Optimizer" data-title="Peralihan fase dan parameter AO">
+    <div class="eyebrow ao-text">03 / FASE PENCARIAN</div><h2>Peralihan pada dua pertiga iterasi</h2>
+    <div class="phase-track"><div>Eksplorasi <b>X₁ atau X₂</b></div><div>Eksploitasi <b>X₃ atau X₄</b></div><span id="phase-marker"></span></div><label for="ao-time">Iterasi t dari T = 60 <output id="ao-time-out">1 / 60</output></label><input id="ao-time" type="range" min="1" max="60" value="1"><p id="phase-explanation" class="callout"></p>
+    <div class="editorial-columns compact"><div><h3>G₂ = 2(1 − t/T)</h3><p>Pengali gerak turun dari 2 menuju 0. Saat ini: <b id="g2-value">1,97</b>.</p></div><div><h3>α = δ = 0,1</h3><p>Koefisien pada X₃. Pemilihan strategi dalam setiap fase memakai peluang 50:50.</p></div><div><h3>Langkah Lévy</h3><p>Langkah acak berekor berat memungkinkan lompatan sesekali. Demo memakai β = 1,5 dan skala 0,01.</p></div></div>
+    <p class="footnote">AO memakai penerimaan greedy: kandidat baru mengganti individu jika fitness membaik. Clip dan decoder sama dengan SMA. [3, 4]</p>
+  </section>
+
+  <section class="slide lab-slide" data-chapter="Aquila Optimizer" data-title="Simulasi AO per iterasi">
+    <a class="visualization-link" href="./visualization/?view=ao&amp;returnSlide=19" data-visualization="ao">Buka Visualisasi 3D ↗</a>
+    <div class="eyebrow ao-text">03 / LABORATORIUM AO</div><h2>Amati pergantian strategi AO</h2><p class="subtitle">Perhatikan penghitung X₁–X₄ saat melewati dua pertiga iterasi.</p><div class="lab" data-algorithm="AO"></div>
+  </section>
+
+  <section class="slide" data-chapter="Aquila Optimizer" data-title="Perbandingan mekanisme SMA dan AO">
+    <div class="eyebrow">03 / PERBANDINGAN MEKANISME</div><h2>Tujuan sama, aturan pencarian berbeda</h2>
+    <table class="comparison-table"><thead><tr><th>Aspek</th><th class="sma-text">SMA</th><th class="ao-text">AO</th></tr></thead><tbody><tr><td>Sinyal utama</td><td>Peringkat fitness, bobot W, solusi terbaik</td><td>Solusi terbaik, rata-rata populasi, Lévy</td></tr><tr><td>Pola pencarian</td><td>Acak, mendekat, kontraksi</td><td>Empat strategi dalam dua fase</td></tr><tr><td>Pengaturan waktu</td><td>Amplitudo a dan b mengecil</td><td>Eksplorasi hingga ⅔ T, lalu eksploitasi</td></tr><tr><td>Penerimaan di demo</td><td>Posisi baru mengganti individu</td><td>Posisi baru diterima jika membaik</td></tr><tr><td>Kesamaan</td><td colspan="2">Populasi real, decoder VM, fungsi objektif, arsip terbaik, dan anggaran evaluasi yang sama</td></tr></tbody></table>
+    <p class="callout">Nama atau inspirasi biologis tidak menentukan pemenang. Bandingkan hasil pada model dan anggaran yang jelas.</p>
+  </section>
+
+  <section class="slide battle-slide" data-chapter="Laboratorium & evaluasi" data-title="Laboratorium perbandingan SMA dan AO">
+    <a class="visualization-link" href="./visualization/?view=compare&amp;returnSlide=21" data-visualization="compare">Buka Visualisasi 3D ↗</a>
+    <div class="eyebrow">04 / LABORATORIUM PERBANDINGAN</div><h2>SMA <span class="muted">dan</span> AO, pada kondisi yang sama</h2>
+    <div id="battle-controls"></div><div id="battle-status" role="status" class="caption"></div>
+    <div class="battle-layout"><div><div class="figure-label">FITNESS TERBAIK ↓ <span class="sma-text">━ SMA</span><span class="ao-text">┅ AO</span></div><div id="battle-chart"></div><table class="small-table"><thead><tr><th>Metode</th><th>f ↓</th><th>M (d)</th><th>C (UB)</th></tr></thead><tbody id="battle-table"></tbody></table></div><div><div class="segmented" id="battle-view"><button data-view="SMA" class="selected">Jadwal SMA</button><button data-view="AO">Jadwal AO</button></div><div id="battle-gantt"></div><p id="battle-insight" class="callout"></p></div></div>
+    <p class="footnote">Kedua algoritma memulai dari populasi identik. Aliran acak pembaruan terpisah. RR dan EFT memakai workload yang sama.</p>
+  </section>
+
+  <section class="slide" data-chapter="Laboratorium & evaluasi" data-title="Eksperimen banyak seed">
+    <div class="eyebrow">04 / VARIASI STOKASTIK</div><h2>Satu hasil belum cukup</h2><p class="subtitle">Ulangi 20 seed pencarian pada satu workload tetap untuk mengamati variasi algoritma.</p>
+    <div class="batch-actions"><button id="batch-run" class="primary">Jalankan 20 seed</button><button id="batch-export" disabled>Unduh hasil CSV</button><span id="batch-status" role="status">Menggunakan konfigurasi laboratorium perbandingan.</span></div>
+    <div class="split"><div><div id="batch-chart" class="empty-chart">Hasil muncul setelah eksperimen dijalankan.</div></div><div><table><thead><tr><th>Fitness akhir ↓</th><th class="sma-text">SMA</th><th class="ao-text">AO</th></tr></thead><tbody id="batch-table"><tr><td>Rata-rata ± SD</td><td>—</td><td>—</td></tr><tr><td>Median</td><td>—</td><td>—</td></tr><tr><td>Terbaik / terburuk</td><td>—</td><td>—</td></tr></tbody></table><p id="batch-conclusion" class="callout">Populasi awal dipasangkan untuk setiap seed. SD memakai simpangan baku sampel, pembagi n − 1.</p></div></div>
+    <p class="footnote">Workload dan parameter dibekukan dari slide 21. Yang berubah hanya seed populasi/pembaruan. Hasil ini bersifat deskriptif, bukan bukti superioritas umum.</p>
+  </section>
+
+  <section class="slide" data-chapter="Laboratorium & evaluasi" data-title="Validasi dengan enumerasi eksak">
+    <div class="eyebrow">04 / VALIDASI</div><h2>Kasus kecil memiliki jawaban pembanding</h2><p class="subtitle">Enam tugas, tiga VM. Seluruh 729 penempatan bisa dihitung.</p>
+    <div class="split"><div><p class="lead">Bandingkan hasil SMA dan AO dengan optimum global untuk model kecil ini.</p><div class="formula small-formula">gap = (f<sub>algoritma</sub> / f* − 1) × 100%</div><p>f* adalah fitness terbaik hasil enumerasi. Gap 0% berarti mencapai optimum pada kasus tersebut.</p><button id="exact-run" class="primary">Hitung dan bandingkan</button><p class="caption">Contoh tetap: 6 tugas, 3 VM, w = 0,6, N = 24, T = 60, seed = 42.</p></div><div><table><thead><tr><th>Metode</th><th>f ↓</th><th>Gap</th></tr></thead><tbody id="exact-table"><tr><td>Enumerasi eksak</td><td>—</td><td>—</td></tr><tr><td>SMA</td><td>—</td><td>—</td></tr><tr><td>AO</td><td>—</td><td>—</td></tr></tbody></table><div id="exact-gantt"></div><p id="exact-status" class="caption" role="status">Gantt optimum muncul setelah perhitungan.</p></div></div>
+  </section>
+
+  <section class="slide" data-chapter="Laboratorium & evaluasi" data-title="Biaya komputasi dan eksperimen yang adil">
+    <div class="eyebrow">04 / METODOLOGI</div><h2>Mutu solusi perlu dibaca bersama biayanya</h2>
+    <div class="split"><div><h3>Kompleksitas inti</h3><div class="formula small-formula">SMA: O(T · (N · D + N log N))<br>AO: O(T · N · D)</div><p>N = ukuran populasi, D = jumlah tugas, T = iterasi. Evaluasi jadwal membutuhkan O(D + m).</p><p>Memori inti O(N · D), di luar riwayat visual. Demo mengevaluasi <b>N(T + 1)</b> kandidat per algoritma, termasuk inisialisasi.</p></div><div class="numbered"><div><b>01</b><p><strong>Samakan anggaran.</strong> Gunakan workload, decoder, objektif, N, dan T yang sama.</p></div><div><b>02</b><p><strong>Ulangi pencarian.</strong> Laporkan distribusi, seed, dan parameter lengkap.</p></div><div><b>03</b><p><strong>Sertakan pembanding.</strong> RR, EFT, dan solusi eksak untuk kasus kecil.</p></div><div><b>04</b><p><strong>Pisahkan biaya.</strong> Waktu komputasi scheduler berbeda dari makespan jadwal.</p></div></div></div>
+  </section>
+
+  <section class="slide" data-chapter="Laboratorium & evaluasi" data-title="Keterbatasan dan pengembangan">
+    <div class="eyebrow">04 / BATAS & PENGEMBANGAN</div><h2>Ketika model menjadi lebih realistis</h2>
+    <div class="editorial-columns"><div><span class="large-index">01</span><h3>Kendala sumber daya</h3><p>Tambahkan RAM, jumlah core, deadline, dan biaya transfer. Gunakan repair atau penalti agar solusi memenuhi batas.</p></div><div><span class="large-index">02</span><h3>Ketergantungan tugas</h3><p>Model DAG memerlukan urutan topologis dan waktu siap. Decoder alokasi saja belum cukup.</p></div><div><span class="large-index">03</span><h3>Kualitas pencarian</h3><p>Uji encoding lain, local search, dan tuning pada data terpisah. Evaluasi di beberapa workload, bukan satu contoh.</p></div></div>
+    <div class="wide-takeaway">Demo mengisolasi mekanisme optimasi. Keputusan produksi memerlukan model sistem dan validasi yang sesuai.</div>
+  </section>
+
+  <section class="slide" data-chapter="Laboratorium & evaluasi" data-title="Kuis pemahaman">
+    <div class="eyebrow">04 / CEK PEMAHAMAN</div><h2>Tiga pertanyaan sebelum menyimpulkan</h2>
+    <div id="quiz"></div><div class="quiz-bottom"><span id="quiz-score">Pilih satu jawaban pada setiap pertanyaan.</span><button id="quiz-reset">Ulangi kuis</button></div>
+  </section>
+
+  <section class="slide closing" data-chapter="Penutup" data-title="Kesimpulan dan diskusi">
+    <div class="eyebrow">KESIMPULAN & DISKUSI</div><h2>Jadwal yang baik dimulai<br>dari <span class="accent">model yang tepat.</span></h2>
+    <div class="closing-points"><p><b class="sma-text">SMA</b><span>Memakai bobot fitness dan osilasi adaptif untuk memperbarui populasi.</span></p><p><b class="ao-text">AO</b><span>Memakai empat strategi dengan peralihan eksplorasi ke eksploitasi.</span></p><p><b>Evaluasi</b><span>Hasil perlu dibandingkan pada objektif, anggaran, dan pengulangan yang setara.</span></p></div>
+    <div class="discussion"><span>BAHAN DISKUSI</span><h3>Jika biaya lebih penting daripada kecepatan,<br>bagaimana jadwal terbaik akan berubah?</h3><button class="text-button" data-go="21">Uji di laboratorium ↗</button></div>
+  </section>
+
+  <section class="slide references" data-chapter="Referensi" data-title="Referensi dan catatan simulasi">
+    <div class="eyebrow">SUMBER & REPRODUKSIBILITAS</div><h2>Referensi</h2>
+    <div class="reference-list"><p><b>[1]</b><span>Li, S., Chen, H., Wang, M., Heidari, A. A., & Mirjalili, S. (2020). <i>Slime mould algorithm: A new method for stochastic optimization.</i> Future Generation Computer Systems, 111, 300–323.<br><a href="https://doi.org/10.1016/j.future.2020.03.055" target="_blank" rel="noopener">doi.org/10.1016/j.future.2020.03.055 ↗</a></span></p><p><b>[2]</b><span>Halaman penulis SMA, deskripsi algoritma dan kode sumber.<br><a href="https://aliasgharheidari.com/SMA.html" target="_blank" rel="noopener">aliasgharheidari.com/SMA.html ↗</a></span></p><p><b>[3]</b><span>Abualigah, L., Yousri, D., Abd Elaziz, M., Ewees, A. A., Al-qaness, M. A. A., & Gandomi, A. H. (2021). <i>Aquila Optimizer: A novel meta-heuristic optimization algorithm.</i> Computers & Industrial Engineering, 157, 107250.<br><a href="https://doi.org/10.1016/j.cie.2021.107250" target="_blank" rel="noopener">doi.org/10.1016/j.cie.2021.107250 ↗</a></span></p><p><b>[4]</b><span>Abualigah, L. (2021). Kode pendamping Aquila Optimizer, MATLAB Central File Exchange, versi 1.0.0.<br><a href="https://www.mathworks.com/matlabcentral/fileexchange/89381" target="_blank" rel="noopener">mathworks.com/matlabcentral/fileexchange/89381 ↗</a></span></p></div>
+    <p class="reference-note">Simulasi memakai data sintetis, penjadwalan non-preemptive, decoder interval [0, 1], arsip terbaik, serta Lévy Mantegna. Ini adaptasi pendidikan, bukan replikasi benchmark paper. Rincian implementasi dan atribusi foto tersedia di <a href="README.md" target="_blank">README.md</a>.</p>
+  </section>
+  </main>
+  <footer class="bottom-bar"><div class="progress-dots" id="progress-dots"></div><div class="slide-position"><span id="slide-counter">01 / 28</span><button id="prev" aria-label="Slide sebelumnya">←</button><button id="next" aria-label="Slide berikutnya">→</button></div></footer><div class="progress-track"><div id="progress-fill"></div></div>
+</div>
+<dialog id="overview"><div class="dialog-header"><h2>Daftar slide</h2><button data-close="overview" aria-label="Tutup daftar slide">✕</button></div><div id="overview-grid"></div></dialog>
+<dialog id="notes"><div class="dialog-header"><h2>Catatan pembicara</h2><button data-close="notes" aria-label="Tutup catatan">✕</button></div><h3 id="note-title"></h3><div id="note-body"></div><div class="notes-controls"><button id="notes-prev">← Sebelumnya</button><span id="note-counter"></span><button id="notes-next">Berikutnya →</button></div></dialog>
+<dialog id="help"><div class="dialog-header"><h2>Panduan presentasi</h2><button data-close="help" aria-label="Tutup panduan">✕</button></div><dl><dt>← / → / Spasi</dt><dd>Slide sebelumnya / berikutnya</dd><dt>Home / End</dt><dd>Slide pertama / terakhir</dd><dt>O</dt><dd>Daftar seluruh slide</dd><dt>N</dt><dd>Catatan pembicara</dd><dt>F</dt><dd>Layar penuh</dd><dt>B</dt><dd>Layar gelap sementara</dd><dt>Esc</dt><dd>Tutup panel atau layar gelap</dd></dl><p>Simulasi: pilih parameter, klik Terapkan, lalu gunakan +1 iterasi, Putar, atau Selesaikan. Mengubah parameter menghentikan animasi. Grafik menampilkan perhitungan nyata.</p><button id="reading-button">Mode baca / mode slide</button><button id="print-button">Cetak slide</button></dialog>
+<div id="blackout" hidden><span>Tekan B atau Esc untuk kembali</span></div>
+<div id="announcer" class="sr-only" aria-live="polite"></div>
+<script src="engine.js"></script><script src="app.js"></script>
+</body>
+</html>
