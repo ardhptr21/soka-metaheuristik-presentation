@@ -1,0 +1,38 @@
+const {chromium}=require('playwright');
+const assert=require('node:assert/strict');
+const path=require('node:path');
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--enable-unsafe-swiftshader']});
+ const page=await browser.newPage({viewport:{width:1600,height:1000},reducedMotion:'reduce'});
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.goto('http://127.0.0.1:4173/visualization/?view=ao',{waitUntil:'networkidle'});
+ await page.waitForFunction(()=>!!window.AlgorithmLab);await page.waitForTimeout(100);
+ const original=await page.locator('#scene-host').boundingBox();
+ await page.screenshot({path:path.join(__dirname,'focus-before.png'),fullPage:true});
+ await page.locator('#step-button').click();
+ const before=await page.evaluate(()=>({cursor:AlgorithmLab.simulation.cursor,best:AlgorithmLab.simulation.snapshot('AO').score,evaluations:AlgorithmLab.simulation.optimizers.AO.evaluations}));
+ await page.locator('#focus-button').click();await page.waitForTimeout(100);
+ assert.equal(await page.evaluate(()=>AlgorithmLab.focusMode),true);
+ for(const selector of ['.app-header','.sidebar','.inspector','.metrics-strip','.evidence-panels'])assert.equal(await page.locator(selector).isVisible(),false);
+ for(const selector of ['#play-button','#step-button','#timeline','#focus-button','#zoom-in','#fit-camera'])assert.equal(await page.locator(selector).isVisible(),true);
+ const focused=await page.locator('#scene-host').boundingBox();assert.ok(focused.width>original.width);assert.ok(focused.height>original.height);assert.ok(focused.width*focused.height>original.width*original.height*2);
+ assert.equal(await page.evaluate(()=>AlgorithmLab.simulation.cursor),before.cursor);
+ assert.equal(await page.evaluate(()=>AlgorithmLab.simulation.snapshot('AO').score),before.best);
+ const distance=await page.evaluate(()=>AlgorithmLab.scene.camera.position.distanceTo(AlgorithmLab.scene.controls.target));
+ await page.locator('#zoom-in').click();assert.ok(await page.evaluate(()=>AlgorithmLab.scene.camera.position.distanceTo(AlgorithmLab.scene.controls.target))<distance);
+ await page.locator('#fit-camera').click();const restored=await page.evaluate(()=>AlgorithmLab.scene.camera.position.distanceTo(AlgorithmLab.scene.controls.target));assert.ok(Math.abs(restored-distance)<1e-7);
+ await page.locator('#step-button').click();assert.equal(await page.evaluate(()=>AlgorithmLab.simulation.cursor),before.cursor+1);
+ await page.screenshot({path:path.join(__dirname,'focus-desktop.png'),fullPage:true});
+ await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>AlgorithmLab.focusMode),false);assert.equal(await page.locator('.sidebar').isVisible(),true);
+ await page.locator('#focus-button').click();await page.keyboard.press('f');assert.equal(await page.evaluate(()=>AlgorithmLab.focusMode),false);
+ // Mobile viewport uses the whole screen, retains controls, and restores drawers.
+ await page.setViewportSize({width:390,height:844});await page.locator('#focus-button').click();await page.waitForTimeout(100);
+ assert.equal(await page.evaluate(()=>AlgorithmLab.focusMode),true);
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ const mobileScene=await page.locator('#scene-host').boundingBox(),controls=await page.locator('.transport').boundingBox();assert.ok(mobileScene.height>550);assert.ok(controls.y+controls.height<=845);
+ await page.screenshot({path:path.join(__dirname,'focus-mobile.png'),fullPage:true});
+ await page.locator('#focus-button').click();await page.locator('#settings-button').click();assert.equal(await page.locator('.sidebar').isVisible(),true);await page.locator('.close-settings').click();
+ await page.locator('[data-view="compare"]').click();await page.locator('#focus-button').click();await page.waitForTimeout(100);
+ const v=await page.evaluate(()=>AlgorithmLab.scene.viewports());assert.equal(v.length,2);assert.notEqual(v[0].y,v[1].y);
+ assert.deepEqual(errors,[]);await browser.close();console.log(JSON.stringify({passed:true,originalScene:original,focusedScene:focused,areaGain:(focused.width*focused.height/(original.width*original.height)).toFixed(2),checks:['hide all panels','simulation state preserved','working playback','zoom and fit','Escape and F','mobile full viewport','comparison layout'],errors}));
+})();

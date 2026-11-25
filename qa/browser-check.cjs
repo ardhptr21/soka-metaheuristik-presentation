@@ -1,0 +1,60 @@
+const {chromium}=require('playwright');
+const path=require('node:path');
+const fs=require('node:fs');
+const assert=require('node:assert/strict');
+(async()=>{
+  const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+  const page=await browser.newPage({viewport:{width:1600,height:900},deviceScaleFactor:1});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('file:///'+path.resolve(__dirname,'../presentasi-task-scheduling.html').replace(/\\/g,'/'));
+  await page.waitForFunction(()=>typeof window.Presentation?.go==='function');
+  await page.screenshot({path:path.join(__dirname,'slide-01.png')});
+  const overflow=[];
+  for(let i=0;i<28;i++){
+    await page.evaluate(i=>window.Presentation.go(i),i);
+    await page.waitForTimeout(330);
+    const issues=await page.evaluate(()=>{
+      const slide=document.querySelector('.slide.active'),bounds=slide.getBoundingClientRect();
+      return [...slide.querySelectorAll('p,h1,h2,h3,table,.control-bar,.lab-actions,.lab-body,.metrics,.gantt,.quiz-bottom,.discussion,.team-list')].flatMap(el=>{
+        const r=el.getBoundingClientRect();
+        if(r.bottom>bounds.bottom-8 || r.right>bounds.right-15 || r.left<bounds.left+10)return [{text:el.textContent.slice(0,65),bottom:Math.round(r.bottom),right:Math.round(r.right)}];return [];
+      });
+    });
+    if(issues.length)overflow.push({slide:i+1,issues});
+    await page.screenshot({path:path.join(__dirname,`slide-${String(i+1).padStart(2,'0')}.png`)});
+  }
+  await page.evaluate(()=>window.Presentation.go(13));
+  await page.locator('.lab[data-algorithm="SMA"] [data-action="step"]').click();
+  assert.equal(await page.evaluate(()=>window.Presentation.controllers[0].optimizer.iteration),1);
+  await page.locator('.lab[data-algorithm="SMA"] [data-action="finish"]').click();
+  assert.equal(await page.evaluate(()=>window.Presentation.controllers[0].optimizer.iteration),60);
+  await page.screenshot({path:path.join(__dirname,'sma-finished.png')});
+  await page.evaluate(()=>window.Presentation.go(18));
+  await page.locator('.lab[data-algorithm="AO"] [data-action="finish"]').click();
+  assert.equal(await page.evaluate(()=>window.Presentation.controllers[1].optimizer.iteration),60);
+  await page.screenshot({path:path.join(__dirname,'ao-finished.png')});
+  await page.evaluate(()=>window.Presentation.go(20));
+  await page.locator('#battle-controls [data-action="finish"]').click();
+  assert.equal(await page.evaluate(()=>window.Presentation.battle.sma.iteration),60);
+  await page.screenshot({path:path.join(__dirname,'battle-finished.png')});
+  await page.evaluate(()=>window.Presentation.go(21));
+  await page.locator('#batch-run').click();
+  await page.waitForFunction(()=>window.Presentation.batchRows.length===20&&!document.querySelector('#batch-run').disabled);
+  assert.equal(await page.locator('#batch-table tr').count(),3);
+  const downloadPromise=page.waitForEvent('download');await page.locator('#batch-export').click();const download=await downloadPromise;await download.saveAs(path.join(__dirname,'batch-output.csv'));
+  assert.equal(fs.readFileSync(path.join(__dirname,'batch-output.csv'),'utf8').trim().split(/\r?\n/).length,41);
+  await page.screenshot({path:path.join(__dirname,'batch-finished.png')});
+  await page.evaluate(()=>window.Presentation.go(22));await page.locator('#exact-run').click();await page.screenshot({path:path.join(__dirname,'exact-finished.png')});
+  await page.evaluate(()=>window.Presentation.go(25));await page.locator('#quiz button[data-question="0"][data-answer="1"]').click();await page.locator('#quiz button[data-question="1"][data-answer="2"]').click();await page.locator('#quiz button[data-question="2"][data-answer="0"]').click();assert.match(await page.locator('#quiz-score').innerText(),/3 benar/);await page.screenshot({path:path.join(__dirname,'quiz-finished.png')});
+  await page.locator('#notes-button').click();assert.equal(await page.locator('#notes').evaluate(e=>e.open),true);await page.locator('[data-close="notes"]').click();
+  await page.locator('#overview-button').click();assert.equal(await page.locator('#overview-grid button').count(),28);await page.locator('#overview-grid button').first().click();assert.equal(await page.evaluate(()=>window.Presentation.current),0);
+  await page.keyboard.press('ArrowRight');assert.equal(await page.evaluate(()=>window.Presentation.current),1);
+  await page.keyboard.press('b');assert.equal(await page.locator('#blackout').isVisible(),true);await page.keyboard.press('Escape');
+  await page.setViewportSize({width:1280,height:720});await page.evaluate(()=>window.Presentation.go(20));await page.screenshot({path:path.join(__dirname,'battle-1280.png')});
+  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>window.Presentation.go(0));await page.screenshot({path:path.join(__dirname,'mobile-cover.png')});
+  const network=await page.evaluate(()=>performance.getEntriesByType('resource').filter(e=>e.name.startsWith('http')).map(e=>e.name));assert.deepEqual(network,[]);
+  assert.deepEqual(errors,[]);
+  fs.writeFileSync(path.join(__dirname,'browser-report.json'),JSON.stringify({errors,overflow,network,passed:'28 slides, simulations, batch CSV, exact, quiz, dialogs, keys, offline, responsive'},null,2));
+  console.log(JSON.stringify({errors,overflow,network,passed:true},null,2));
+  await browser.close();
+})();

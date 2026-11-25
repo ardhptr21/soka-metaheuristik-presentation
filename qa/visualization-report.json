@@ -1,0 +1,22 @@
+{
+  "base": "http://127.0.0.1:4173",
+  "errors": [],
+  "failures": [],
+  "external": [],
+  "passed": [
+    "actual 3D positions",
+    "raycast selection",
+    "SMA/AO/compare",
+    "axes",
+    "rejected proposals",
+    "history without reevaluation",
+    "paired budgets",
+    "maximum configuration",
+    "URL roundtrip",
+    "playback",
+    "presentation navigation",
+    "mobile drawers",
+    "context loss",
+    "2D fallback"
+  ]
+}
